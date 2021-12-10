@@ -4,7 +4,7 @@
 sudo apt-get remove docker docker-engine docker.io containerd runc
     #Set up the repository
 sudo apt-get update
-sudo apt-get install \
+sudo apt-get install -y\
     ca-certificates \
     curl \
     gnupg \
@@ -15,11 +15,11 @@ echo \
   $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
     #Install Docker Engine
  sudo apt-get update
- sudo apt-get install docker-ce docker-ce-cli containerd.io
+ sudo apt-get install -y docker-ce docker-ce-cli containerd.io
  sudo usermod -aG docker $USER
  newgrp docker 
 
- #Install kubectl
+#Install kubectl
 sudo apt-get update
 sudo apt-get install -y apt-transport-https ca-certificates curl
 sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
@@ -37,3 +37,40 @@ curl "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/${RELEASE_NUMBER}
     --silent --location \
     | tar xz ./eksctl-anywhere
 sudo mv ./eksctl-anywhere /usr/local/bin/
+
+#create a cluster
+CLUSTER_NAME=dev-cluster
+eksctl anywhere generate clusterconfig $CLUSTER_NAME \
+   --provider docker > $CLUSTER_NAME.yaml
+
+eksctl anywhere create cluster -f $CLUSTER_NAME.yaml
+export KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
+kubectl get ns
+
+#istio part
+#curl -L https://istio.io/downloadIstio | sh -
+cd istio-1.12.1
+export PATH=$PWD/bin:$PATH
+istioctl install --set profile=demo -y
+kubectl label namespace default istio-injection=enabled
+kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml
+kubectl get services
+kubectl get pods
+kubectl apply -f samples/bookinfo/networking/bookinfo-gateway.yaml
+istioctl analyze
+export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
+export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="https")].nodePort}')
+export INGRESS_HOST=$(kubectl get po -l istio=ingressgateway -n istio-system -o jsonpath='{.items[0].status.hostIP}')
+export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
+echo "$GATEWAY_URL"
+echo "http://$GATEWAY_URL/productpage"
+kubectl apply -f samples/addons
+kubectl rollout status deployment/kiali -n istio-system
+istioctl dashboard kiali
+
+#GUI installation
+sudo apt-get update && sudo apt-get upgrade
+sudo apt-get install xfce4
+apt-get install firefox
+sudo startxfce4
+
