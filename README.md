@@ -1,95 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-# HybridOnDemand
-LINODE WEST-CENTRAL!
-
-git clone https://github.com/Lelito-IAIA/HybridOnDemand.git
-
-git accesstocken ` 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 `
-
-git clone https://github.com/marcel-dempers/docker-development-youtube-series.git
-
-Run the following commands to give execute permissions
-```
-chmod +x docker.sh
-
-chmod +x kubectl.sh
-
-chmod +x eks.sh 
-```
-Run the scripts and install the necessary packages
-```
-./docker.sh
-
-./kubectl.sh
-
-./eks.sh
-```
-## create a cluster
-```
-CLUSTER_NAME=dev-cluster 
-
-eksctl anywhere generate clusterconfig $CLUSTER_NAME \
-   --provider docker > $CLUSTER_NAME.yaml 
-
-eksctl anywhere create cluster -f $CLUSTER_NAME.yaml
-
-export KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
-
-kubectl get ns
-```
-
-## istio part
-```
-curl -L https://istio.io/downloadIstio | sh -
-
-cd istio-1.12.1
-
-export PATH=$PWD/bin:$PAT
-
-istioctl install --set profile=demo -y
-
-kubectl label namespace default istio-injection=enabled
-
-kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml
-
-kubectl get services
-
-kubectl get pods
-
-kubectl apply -f samples/bookinfo/networking/bookinfo-gateway.yaml
-
-istioctl analyze
-
-export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
-
-export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="https")].nodePort}')
-
-export INGRESS_HOST=$(kubectl get po -l istio=ingressgateway -n istio-system -o jsonpath='{.items[0].status.hostIP}')
-
-export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
-
-echo "$GATEWAY_URL"
-
-echo "http://$GATEWAY_URL/productpage"
-
-kubectl apply -f samples/addons
-
-kubectl rollout status deployment/kiali -n istio-system
-
-istioctl dashboard kiali
-```
-
-## GUI installation
-`sudo apt-get update && sudo apt-get upgrade`
-
-`sudo apt-get -y install xfce4`
-
-`apt-get -y install firefox`
-
-`sudo startxfce4`
-
-=======
 # HybridOnDemand (onCloudPart)
 ## On Linode
 Create 3 new cluster on Linode with v. 1.21 of kubernates (LONDON).
@@ -309,8 +217,8 @@ EOF
 Install istio in cluster-2
 ```
 
-CLUSTER_NAME=$REMOTE_CLUSTER1
-cat << EOF | istioctl install -y --context $REMOTE_CONTEXT1 -f -
+CLUSTER_NAME=$REMOTE_CLUSTER2
+cat << EOF | istioctl install -y --context $REMOTE_CONTEXT2 -f -
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 metadata:
@@ -395,6 +303,7 @@ spec:
       multiCluster:
         clusterName: ${CLUSTER_NAME}
 EOF
+
 
 ```
 
@@ -674,6 +583,9 @@ When the reviews v1 and v2 service deployments fail in cluster1, the productpage
 
 ![](./Images/bookinfo-v3.png)
 ![](./Images/Schermata%202022-01-10%20alle%2017.40.06.png)
->>>>>>> 6be9d97 (commit 13/01)
-=======
->>>>>>> 6a5dffa (update 13/01/2022)
+
+Scale up reviews v1 & v2 in cluster1 to simulate a cluster-1 fix scenario:
+```
+kubectl scale deploy reviews-v1 --replicas=0 --context $REMOTE_CONTEXT1 -n bookinfo                                                   ─╯
+kubectl scale deploy reviews-v2 --replicas=0 --context $REMOTE_CONTEXT1 -n bookinfo                                                   ─╯
+```

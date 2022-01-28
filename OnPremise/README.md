@@ -5,11 +5,7 @@ create a LINODE WEST-CENTRAL (LONDON)!
 Clone this repo to copy all the stuff needed to run.<br/>
 `git clone https://github.com/Lelito-IAIA/HybridOnDemand.git`<br/>
 git username: `Lelito-IAIA`<br/>
-<<<<<<< HEAD
 git accesstocken `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`<br/>
-=======
-git accesstocken `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`<br/>
->>>>>>> 6a5dffa (update 13/01/2022)
 
 Clone the Marcel Dumper repo to copy all the sutff needed to run his Istio project.
 
